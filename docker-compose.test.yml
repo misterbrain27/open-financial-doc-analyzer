@@ -1,0 +1,17 @@
+# TEST : base de données ÉPHÉMÈRE (tmpfs, rien sur disque), app en mode test.
+# Lancement : make test
+#   docker compose -f docker-compose.yml -f docker-compose.test.yml run --rm backend pytest
+services:
+  db:
+    environment:
+      POSTGRES_DB: financialrag_test
+    tmpfs:
+      - /var/lib/postgresql/data
+
+  backend:
+    env_file:
+      - .env.test
+    environment:
+      APP_ENV: test
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-rag}:${POSTGRES_PASSWORD:-rag}@db:5432/financialrag_test
+    command: ["pytest"]

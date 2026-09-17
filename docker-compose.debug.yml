@@ -1,0 +1,44 @@
+# DEBUG : comme local, mais l'app démarre sous debugpy et attend un client (VS Code / PyCharm)
+# sur le port 5678 avant d'exécuter le code.
+# Lancement : make debug   (docker compose -f docker-compose.yml -f docker-compose.debug.yml up)
+services:
+  db:
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  backend:
+    env_file:
+      - .env.local
+    environment:
+      APP_ENV: debug
+    volumes:
+      - ./backend:/app
+      - ./data:/app/data
+    ports:
+      - "8000:8000"
+      - "5678:5678"
+    command:
+      - "python"
+      - "-m"
+      - "debugpy"
+      - "--listen"
+      - "0.0.0.0:5678"
+      - "--wait-for-client"
+      - "-m"
+      - "uvicorn"
+      - "app.main:app"
+      - "--host"
+      - "0.0.0.0"
+      - "--port"
+      - "8000"
+  portainer:
+    image: portainer/portainer-ce:lts
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+volumes:
+  pgdata:
+  portainer_data:

@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.ruff_cache/
+.pytest_cache/
+*.egg-info/
+.coverage
+htmlcov/
+
+# Environnements (secrets) — .env.example et .env.test sont versionnés
+.env
+.env.local
+.env.prod
+.env.*.local
+
+# Données (PDF sources volumineux)
+data/raw/*
+!data/raw/.gitkeep
+
+# Node / Angular
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+
+# Divers
+.DS_Store
+backend/scratch_test.py
+
+# Bac à sable d'apprentissage (exercices perso, non versionnés)
+backend/practice/
+frontend/src/app/practice/
+frontend/practice-e2e/
+frontend/playwright.practice.config.ts
+
+# Playwright
+frontend/playwright-report/
+frontend/test-results/
+frontend/.playwright/
