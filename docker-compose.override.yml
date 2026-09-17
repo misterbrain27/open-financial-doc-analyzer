@@ -1,0 +1,25 @@
+# LOCAL (chargé automatiquement par `docker compose up`).
+# Code monté en volume + hot-reload + BDD persistante.
+services:
+  db:
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  backend:
+    env_file:
+      - .env.local
+    environment:
+      APP_ENV: local
+    volumes:
+      - ./backend:/app
+      - ./data:/app/data
+      - ./eval:/app/eval
+    ports:
+      - "8000:8000"
+    command:
+      ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+volumes:
+  pgdata:
