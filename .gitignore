@@ -27,6 +27,7 @@ frontend/.angular/
 # Divers
 .DS_Store
 backend/scratch_test.py
+.vscode/
 
 # Bac à sable d'apprentissage (exercices perso, non versionnés)
 backend/practice/

@@ -1,0 +1,248 @@
+/* ==========================================================================
+   Thème sombre pour Swagger UI (servi via /docs).
+
+   IMPORTANT : `swagger_css_url` REMPLACE le <link> vers la CSS de base de
+   Swagger — il ne l'ajoute pas. On importe donc d'abord la base (même version
+   majeure @5 que le bundle JS chargé par FastAPI), puis on applique les
+   surcharges sombres en dessous.
+   ========================================================================== */
+@import url("https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css");
+
+:root {
+  /* Palette sombre (bleutée, sobre) */
+  --sd-bg: #0f1117;          /* fond de page */
+  --sd-panel: #171a21;       /* cartes / blocs */
+  --sd-panel-2: #1b1f27;     /* blocs imbriqués, en-têtes */
+  --sd-border: #2a2f3a;      /* bordures */
+  --sd-text: #e6e8ec;        /* texte principal */
+  --sd-muted: #9aa4b2;       /* texte secondaire */
+  --sd-accent: #4c8dff;      /* liens / accents */
+  --sd-code-bg: #11141a;     /* fond des blocs de code */
+}
+
+/* --- Fond global & typographie ------------------------------------------ */
+body {
+  background: var(--sd-bg);
+}
+
+.swagger-ui,
+.swagger-ui .info li,
+.swagger-ui .info p,
+.swagger-ui .info table,
+.swagger-ui label,
+.swagger-ui .parameter__name,
+.swagger-ui .parameter__type,
+.swagger-ui .prop-type,
+.swagger-ui .response-col_status,
+.swagger-ui .opblock-description-wrapper p,
+.swagger-ui .responses-inner h4,
+.swagger-ui .responses-inner h5 {
+  color: var(--sd-text);
+}
+
+.swagger-ui .opblock-summary-description,
+.swagger-ui .parameter__in,
+.swagger-ui .tab li,
+.swagger-ui table.model tr.property-row .star,
+.swagger-ui .response-col_links {
+  color: var(--sd-muted);
+}
+
+.swagger-ui a,
+.swagger-ui .info a {
+  color: var(--sd-accent);
+}
+
+/* --- Bloc d'en-tête (titre / description / version) --------------------- */
+.swagger-ui .topbar {
+  background: var(--sd-panel-2);
+  border-bottom: 1px solid var(--sd-border);
+}
+
+.swagger-ui .info .title,
+.swagger-ui .info h1,
+.swagger-ui .info h2,
+.swagger-ui .info h3,
+.swagger-ui .info h4 {
+  color: var(--sd-text);
+}
+
+.swagger-ui .info .title small.version-stamp {
+  background: var(--sd-accent);
+}
+
+.swagger-ui .info .title small {
+  background: var(--sd-panel-2);
+}
+
+/* --- Barre servers / Authorize ------------------------------------------ */
+.swagger-ui .scheme-container {
+  background: var(--sd-panel);
+  border-bottom: 1px solid var(--sd-border);
+  box-shadow: none;
+}
+
+.swagger-ui .servers > label {
+  color: var(--sd-muted);
+}
+
+/* --- En-têtes de tags ---------------------------------------------------- */
+.swagger-ui .opblock-tag {
+  color: var(--sd-text);
+  border-bottom: 1px solid var(--sd-border);
+}
+
+.swagger-ui .opblock-tag small {
+  color: var(--sd-muted);
+}
+
+/* --- Blocs d'opération (endpoints) -------------------------------------- */
+.swagger-ui .opblock {
+  background: var(--sd-panel);
+  border: 1px solid var(--sd-border);
+  box-shadow: none;
+}
+
+.swagger-ui .opblock .opblock-summary {
+  border-bottom: 1px solid var(--sd-border);
+}
+
+.swagger-ui .opblock .opblock-summary-path,
+.swagger-ui .opblock .opblock-summary-path__deprecated,
+.swagger-ui .opblock .opblock-summary-operation-id {
+  color: var(--sd-text);
+}
+
+/* Teinte de fond légère par méthode HTTP (les couleurs vives des badges
+   restent gérées par la base ; on n'assombrit que le fond du bloc). */
+.swagger-ui .opblock.opblock-get { background: rgba(76, 141, 255, 0.06); }
+.swagger-ui .opblock.opblock-post { background: rgba(73, 204, 144, 0.06); }
+.swagger-ui .opblock.opblock-put { background: rgba(252, 161, 48, 0.06); }
+.swagger-ui .opblock.opblock-delete { background: rgba(249, 62, 62, 0.06); }
+.swagger-ui .opblock.opblock-patch { background: rgba(80, 227, 194, 0.06); }
+
+.swagger-ui .opblock-section-header {
+  background: var(--sd-panel-2);
+  border-bottom: 1px solid var(--sd-border);
+  box-shadow: none;
+}
+
+.swagger-ui .opblock-section-header h4,
+.swagger-ui .opblock-section-header > label {
+  color: var(--sd-text);
+}
+
+/* --- Tableaux (paramètres, réponses) ------------------------------------ */
+.swagger-ui table thead tr td,
+.swagger-ui table thead tr th {
+  color: var(--sd-muted);
+  border-bottom: 1px solid var(--sd-border);
+}
+
+.swagger-ui .parameters-col_description,
+.swagger-ui table.parameters td,
+.swagger-ui table.responses-table td {
+  color: var(--sd-text);
+}
+
+/* --- Champs de saisie ---------------------------------------------------- */
+.swagger-ui input[type="text"],
+.swagger-ui input[type="password"],
+.swagger-ui input[type="email"],
+.swagger-ui input[type="number"],
+.swagger-ui textarea,
+.swagger-ui select {
+  background: var(--sd-panel-2);
+  color: var(--sd-text);
+  border: 1px solid var(--sd-border);
+}
+
+.swagger-ui textarea {
+  color: var(--sd-text);
+}
+
+.swagger-ui .parameter__name.required::after {
+  color: #f93e3e;
+}
+
+/* --- Boutons ------------------------------------------------------------- */
+.swagger-ui .btn {
+  color: var(--sd-text);
+  border-color: var(--sd-border);
+  background: var(--sd-panel-2);
+  box-shadow: none;
+}
+
+.swagger-ui .btn.authorize {
+  color: #49cc90;
+  border-color: #49cc90;
+}
+
+.swagger-ui .btn.authorize svg {
+  fill: #49cc90;
+}
+
+.swagger-ui .btn.execute {
+  background: var(--sd-accent);
+  border-color: var(--sd-accent);
+  color: #fff;
+}
+
+/* --- Modèles / schémas --------------------------------------------------- */
+.swagger-ui section.models {
+  background: var(--sd-panel);
+  border: 1px solid var(--sd-border);
+}
+
+.swagger-ui section.models .model-container {
+  background: var(--sd-panel-2);
+}
+
+.swagger-ui section.models h4,
+.swagger-ui .model-title,
+.swagger-ui .model .property.primitive,
+.swagger-ui .model {
+  color: var(--sd-text);
+}
+
+.swagger-ui .model-toggle::after {
+  /* flèche d'expansion : rendue visible sur fond sombre */
+  filter: invert(1);
+}
+
+/* --- Blocs de code / exemples ------------------------------------------- */
+.swagger-ui .highlight-code,
+.swagger-ui .microlight,
+.swagger-ui .curl-command .copy-to-clipboard,
+.swagger-ui .responses-inner .highlight-code {
+  background: var(--sd-code-bg);
+}
+
+.swagger-ui .markdown code,
+.swagger-ui .renderedMarkdown code {
+  background: var(--sd-code-bg);
+  color: #e6d6a8;
+}
+
+/* --- Modale Authorize ---------------------------------------------------- */
+.swagger-ui .dialog-ux .modal-ux {
+  background: var(--sd-panel);
+  border: 1px solid var(--sd-border);
+}
+
+.swagger-ui .dialog-ux .modal-ux-header {
+  border-bottom: 1px solid var(--sd-border);
+}
+
+.swagger-ui .dialog-ux .modal-ux-header h3,
+.swagger-ui .dialog-ux .modal-ux-content h4,
+.swagger-ui .dialog-ux .modal-ux-content p {
+  color: var(--sd-text);
+}
+
+/* --- Icônes SVG (flèches d'expansion) ----------------------------------- */
+.swagger-ui .expand-methods svg,
+.swagger-ui .expand-operation svg,
+.swagger-ui svg.arrow {
+  fill: var(--sd-muted);
+}
