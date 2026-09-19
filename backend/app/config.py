@@ -1,8 +1,8 @@
-"""Application configuration, driven by the APP_ENV environment variable.
+"""Configuration applicative, pilotée par la variable d'environnement APP_ENV.
 
-`APP_ENV` ∈ {local, debug, test, prod}. In a container, variables are injected by Docker
-Compose; when running on the host, they are read from `.env.<APP_ENV>`.
-pydantic-settings precedence: environment variables > .env file > default values.
+`APP_ENV` ∈ {local, debug, test, prod}. En conteneur, les variables sont injectées par Docker
+Compose ; en exécution sur l'hôte, elles sont lues depuis `.env.<APP_ENV>`.
+Précédence pydantic-settings : variables d'environnement > fichier .env > valeurs par défaut.
 """
 
 from __future__ import annotations
@@ -23,6 +23,23 @@ class Settings(BaseSettings):
     )
 
     app_env: str = APP_ENV
+    log_level: str = "INFO"
+
+    # Base de données (host `db` en conteneur, `localhost` en exécution hôte)
+    database_url: str = "postgresql+asyncpg://rag:rag@db:5432/financialrag"
+
+    # Embeddings — Ollama, en natif sur l'hôte
+    ollama_base_url: str = "http://host.docker.internal:11434"
+    embedding_model: str = "bge-m3"
+
+    # Génération — fournisseur actif : "mistral" ou "ollama"
+    llm_provider: str = "mistral"
+    mistral_api_key: str = ""
+    mistral_model: str = "mistral-small-latest"
+
+    @property
+    def is_prod(self) -> bool:
+        return self.app_env == "prod"
 
 
 settings = Settings()
