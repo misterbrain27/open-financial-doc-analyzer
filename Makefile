@@ -15,7 +15,7 @@ help: ## Affiche cette aide
 		awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2}'
 
 setup: ## Crée .env.local et .env.prod depuis .env.example (si absents)
-	@test -f .env.local || (cp .env.example .env.local && echo "Créé .env.local — renseigne GROQ_API_KEY")
+	@test -f .env.local || (cp .env.example .env.local && echo "Créé .env.local — renseigne MISTRAL_API_KEY")
 	@test -f .env.prod  || (cp .env.example .env.prod  && echo "Créé .env.prod")
 
 pull-models: ## Télécharge le modèle d'embeddings Ollama (sur l'hôte)
