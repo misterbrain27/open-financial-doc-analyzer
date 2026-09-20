@@ -37,9 +37,16 @@ class Settings(BaseSettings):
     mistral_api_key: str = ""
     mistral_model: str = "mistral-small-latest"
 
+    # Dossier de dépôt des PDF uploadés via /ingest (relatif au WORKDIR du process ;
+    # monté sur `./data/raw` de l'hôte en local/debug — cf. docker-compose.override.yml)
+    upload_dir: str = "data/raw"
+
     @property
     def is_prod(self) -> bool:
         return self.app_env == "prod"
+
+
+settings = Settings()
 
 
 settings = Settings()

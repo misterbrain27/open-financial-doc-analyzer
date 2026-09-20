@@ -1,15 +1,17 @@
-"""FastAPI entry point.
+"""Point d'entrée FastAPI.
 
-Minimal application (`/health` probe) enriched in Phase 6 with the RAG routes (`/ingest`,
-`/query`) — see `app/api/routes.py`.
+Application minimale (sonde `/health`) enrichie en Phase 6 des routes RAG (`/ingest`,
+`/query`) — voir `app/api/routes.py`.
 
-Documentation: Swagger UI is served at /docs with a dark theme. FastAPI generates
-the whole OpenAPI spec automatically; we only disable the default /docs to
-re-inject our dark stylesheet (see `swagger_ui_dark`).
+Documentation : Swagger UI est servi à /docs avec un thème sombre. FastAPI génère
+tout l'OpenAPI automatiquement ; on désactive seulement le /docs par défaut pour
+réinjecter notre feuille de style sombre (voir `swagger_ui_dark`).
 """
 
 from __future__ import annotations
 
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI
@@ -18,7 +20,9 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
+from app.api.routes import router as api_router
 from app.config import settings
+from app.db import init_db
 
 DESCRIPTION = """
 API du **financial-doc-analyzer** — système RAG d'analyse de documents financiers
@@ -32,17 +36,27 @@ streamée en SSE, avec citation des sources).
 """
 
 
-# `docs_url=None`: we take over /docs to inject the dark CSS
-# (see the `swagger_ui_dark` route below). /redoc keeps the default theme.
+@asynccontextmanager
+async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
+    """Active pgvector et crée les tables au démarrage (`create_all`, idempotent).
+
+    Sans ce hook, une base fraîche (nouveau volume, `make clean`) n'a aucun schéma :
+    `/ingest`/`/query` échoueraient sur des tables inexistantes tant que
+    `scripts/ingest_cli.py` n'a pas été lancé manuellement.
+    """
+    await init_db()
+    yield
+
+
+# `docs_url=None` : on reprend la main sur /docs pour injecter la CSS sombre
+# (voir la route `swagger_ui_dark` plus bas). /redoc reste au thème par défaut.
 app = FastAPI(
     title="Financial Doc Analyzer API",
     description=DESCRIPTION,
     version="0.1.0",
     docs_url=None,
-    contact={
-        "name": "David",
-        "url": "https://github.com/misterbrain27/open-financial-doc-analyzer",
-    },
+    lifespan=lifespan,
+    contact={"name": "David", "url": "https://github.com/misterbrain27/financial-doc-analyzer"},
     openapi_tags=[
         {"name": "health", "description": "Sondes de disponibilité et environnement actif."},
         {"name": "ingestion", "description": "Chargement de documents PDF en base."},
@@ -50,9 +64,10 @@ app = FastAPI(
     ],
 )
 
+app.include_router(api_router)
 
-# Static assets (Swagger theme CSS). `Path(__file__).parent` resolves correctly
-# both on host execution and inside the container (directory /app/app/static).
+# Ressources statiques (CSS du thème Swagger). `Path(__file__).parent` résout aussi bien
+# en exécution hôte que dans le conteneur (répertoire /app/app/static).
 app.mount(
     "/static",
     StaticFiles(directory=Path(__file__).parent / "static"),
@@ -62,7 +77,7 @@ app.mount(
 
 @app.get("/docs", include_in_schema=False)
 async def swagger_ui_dark() -> HTMLResponse:
-    """Swagger UI with a dark theme (CSS served from /static)."""
+    """Swagger UI avec thème sombre (CSS servie depuis /static)."""
     return get_swagger_ui_html(
         openapi_url=app.openapi_url or "/openapi.json",
         title=f"{app.title} — docs",
@@ -71,7 +86,7 @@ async def swagger_ui_dark() -> HTMLResponse:
 
 
 class HealthResponse(BaseModel):
-    """Response of the availability probe."""
+    """Réponse de la sonde de disponibilité."""
 
     status: str
     env: str
@@ -79,5 +94,5 @@ class HealthResponse(BaseModel):
 
 @app.get("/health", tags=["health"], summary="Sonde de disponibilité")
 async def health() -> HealthResponse:
-    """Checks that the application is responding and exposes the active environment."""
+    """Vérifie que l'application répond et expose l'environnement actif."""
     return HealthResponse(status="ok", env=settings.app_env)
