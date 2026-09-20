@@ -1,0 +1,137 @@
+<div class="thread" #scroller>
+  <div class="thread__inner">
+    @if (!messages().length && !streaming()) {
+      <div class="empty">
+        <span class="empty__mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+               stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 12a8 8 0 0 1-8 8H4l2.2-2.2A8 8 0 1 1 20 12Z" />
+            <path d="M8.5 11.5h7M8.5 14.5h4" />
+          </svg>
+        </span>
+        <h1 class="fr-title">Interrogez vos documents</h1>
+        <p class="fr-subtitle">
+          Chaque réponse est générée à partir des passages retrouvés dans vos PDF, et citée avec sa
+          page.
+        </p>
+        <div class="empty__suggestions">
+          @for (suggestion of suggestions; track suggestion) {
+            <button class="suggestion" type="button" (click)="ask(queryInput, suggestion)">
+              <span>{{ suggestion }}</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M5 12h14M13 6l6 6-6 6" />
+              </svg>
+            </button>
+          }
+        </div>
+      </div>
+    }
+
+    @for (msg of messages(); track $index) {
+      <article class="msg" [class.msg--user]="msg.role === 'user'">
+        @if (msg.role === 'assistant') {
+          <span class="avatar" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 17.5 8.5 12l3.5 3.5L21 6" />
+            </svg>
+          </span>
+        }
+
+        <div class="bubble">
+          @if (msg.text) {
+            <p class="bubble__text">{{ msg.text }}</p>
+          }
+
+          @if (msg.error) {
+            <p class="bubble__error">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M12 8v5M12 16.5h.01" />
+              </svg>
+              {{ msg.error }}
+            </p>
+          }
+
+          @if (msg.sources?.length) {
+            <div class="sources">
+              <p class="sources__label">Sources</p>
+              <ol class="sources__list">
+                @for (source of msg.sources; track source.index) {
+                  <li class="source" [title]="source.text">
+                    <span class="source__index">{{ source.index }}</span>
+                    <span class="source__meta">
+                      <span class="source__company">{{ source.company ?? 'Document' }}</span>
+                      <span class="source__detail">
+                        @if (source.year) {
+                          {{ source.year }} ·
+                        }
+                        page {{ source.page_number }}
+                      </span>
+                    </span>
+                  </li>
+                }
+              </ol>
+            </div>
+          }
+        </div>
+      </article>
+    }
+
+    @if (streaming()) {
+      <article class="msg">
+        <span class="avatar avatar--live" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 17.5 8.5 12l3.5 3.5L21 6" />
+          </svg>
+        </span>
+
+        <div class="bubble">
+          @if (streamingSources(); as sources) {
+            <div class="sources sources--live">
+              <p class="sources__label">{{ sources.length }} passages retrouvés</p>
+            </div>
+          } @else {
+            <p class="thinking">
+              <span class="thinking__dots" aria-hidden="true"><i></i><i></i><i></i></span>
+              Recherche des passages pertinents…
+            </p>
+          }
+
+          @if (streamingText()) {
+            <p class="bubble__text bubble__text--live">{{ streamingText() }}</p>
+          }
+        </div>
+      </article>
+    }
+  </div>
+</div>
+
+<form class="composer" (submit)="onSubmit(queryInput); $event.preventDefault()">
+  <div class="composer__field" [class.composer__field--busy]="streaming()">
+    <input
+      #queryInput
+      class="composer__input"
+      type="text"
+      autocomplete="off"
+      placeholder="Posez une question sur vos documents…"
+      aria-label="Votre question"
+      [disabled]="streaming()"
+    />
+    <button
+      class="composer__send"
+      type="submit"
+      aria-label="Envoyer"
+      [disabled]="streaming()"
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M5 12h13M12 5l7 7-7 7" />
+      </svg>
+    </button>
+  </div>
+  <p class="composer__hint">Les réponses citent la page d’origine de chaque passage utilisé.</p>
+</form>

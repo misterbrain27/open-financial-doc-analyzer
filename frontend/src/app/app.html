@@ -1,0 +1,44 @@
+<header class="header">
+  <div class="header__inner">
+    <div class="brand">
+      <span class="brand__mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 17.5 8.5 12l3.5 3.5L21 6" />
+          <path d="M15.5 6H21v5.5" />
+        </svg>
+      </span>
+      <span class="brand__text">
+        <span class="brand__name">Financial<span class="fr-gradient-text">RAG</span></span>
+        <span class="brand__tagline">Analyse de documents financiers</span>
+      </span>
+    </div>
+
+    <nav class="nav" aria-label="Navigation principale">
+      <a
+        class="nav__link"
+        routerLink=""
+        routerLinkActive="nav__link--active"
+        [routerLinkActiveOptions]="{ exact: true }"
+      >
+        <svg class="nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5" />
+          <path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
+        </svg>
+        Upload
+      </a>
+      <a class="nav__link" routerLink="/chat" routerLinkActive="nav__link--active">
+        <svg class="nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M20 12a8 8 0 0 1-8 8H4l2.2-2.2A8 8 0 1 1 20 12Z" />
+        </svg>
+        Chat
+      </a>
+    </nav>
+  </div>
+</header>
+
+<main class="main">
+  <router-outlet />
+</main>

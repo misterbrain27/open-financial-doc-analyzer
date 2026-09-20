@@ -1,0 +1,131 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* En-tête vitré, collant : il flotte au-dessus du halo d'ambiance du body. */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  border-bottom: 1px solid var(--fr-border);
+  background: rgba(7 9 13 / 72%);
+  backdrop-filter: blur(20px) saturate(140%);
+}
+
+.header__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 0.875rem 1.5rem;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.brand__mark {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--fr-radius-md);
+  background: var(--fr-gradient);
+  color: var(--fr-accent-ink);
+  box-shadow: 0 8px 20px -8px rgba(45 212 191 / 60%);
+
+  svg {
+    width: 1.125rem;
+    height: 1.125rem;
+  }
+}
+
+.brand__text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.2;
+}
+
+.brand__name {
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.brand__tagline {
+  color: var(--fr-text-faint);
+  font-size: 0.75rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  border: 1px solid var(--fr-border);
+  border-radius: var(--fr-radius-pill);
+  background: var(--fr-surface-1);
+}
+
+.nav__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4375rem;
+  padding: 0.4375rem 0.9375rem;
+  border-radius: var(--fr-radius-pill);
+  color: var(--fr-text-muted);
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: color 150ms var(--fr-ease), background-color 150ms var(--fr-ease);
+
+  &:hover {
+    background: var(--fr-surface-2);
+    color: var(--fr-text);
+  }
+}
+
+.nav__icon {
+  width: 1rem;
+  height: 1rem;
+}
+
+.nav__link--active {
+  background: var(--fr-accent-soft);
+  color: var(--fr-accent);
+  box-shadow: inset 0 0 0 1px var(--fr-accent-line);
+
+  &:hover {
+    background: var(--fr-accent-soft);
+    color: var(--fr-accent);
+  }
+}
+
+.main {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+@media (width <= 640px) {
+  .header__inner {
+    padding: 0.75rem 1rem;
+  }
+
+  .brand__tagline {
+    display: none;
+  }
+}

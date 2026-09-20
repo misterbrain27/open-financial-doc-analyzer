@@ -1,0 +1,38 @@
+// Angular Material theme (M3), locked to dark mode.
+//
+// `mat.theme()` generates the `--mat-sys-*` system variables consumed by all Material
+// components. We start from a predefined palette (cyan) to get a consistent set of tokens, then
+// `styles.scss` overrides the key tokens with the in-house brand colors (section "Design tokens →
+// Material bridge"). This is the recommended way to customize without forking the
+// palettes: https://material.angular.dev/guide/system-variables
+@use '@angular/material' as mat;
+
+html {
+  height: 100%;
+
+  @include mat.theme(
+    (
+      color: (
+        primary: mat.$cyan-palette,
+        tertiary: mat.$spring-green-palette,
+        // No light/dark toggle: the app is dark by design.
+        theme-type: dark,
+      ),
+      typography: (
+        plain-family: (
+          Inter,
+          'Helvetica Neue',
+          Arial,
+          sans-serif,
+        ),
+        brand-family: (
+          Inter,
+          'Helvetica Neue',
+          Arial,
+          sans-serif,
+        ),
+      ),
+      density: 0,
+    )
+  );
+}
