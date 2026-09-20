@@ -1,0 +1,269 @@
+@use 'material-theme';
+
+/* =============================================================================
+   Design tokens — charte « nuit + teal », pensée pour la lecture de documents
+   financiers : fond très sombre désaturé, surfaces translucides, un seul accent
+   (teal → cyan) qui porte l'action et les citations.
+   ============================================================================= */
+:root {
+  color-scheme: dark;
+
+  /* Fonds */
+  --fr-bg: #07090d;
+  --fr-surface-1: rgba(255 255 255 / 3.5%);
+  --fr-surface-2: rgba(255 255 255 / 6%);
+  --fr-surface-solid: #10141b;
+
+  /* Traits — des filets fins plutôt que des ombres portées : plus net en sombre */
+  --fr-border: rgba(255 255 255 / 8%);
+  --fr-border-strong: rgba(255 255 255 / 16%);
+
+  /* Texte */
+  --fr-text: #e8ecf3;
+  --fr-text-muted: #99a3b7;
+  --fr-text-faint: #6b7488;
+
+  /* Accent */
+  --fr-accent: #2dd4bf;
+  --fr-accent-2: #38bdf8;
+  --fr-accent-ink: #04211d;
+  --fr-accent-soft: rgba(45 212 191 / 12%);
+  --fr-accent-line: rgba(45 212 191 / 32%);
+  --fr-gradient: linear-gradient(135deg, var(--fr-accent) 0%, var(--fr-accent-2) 100%);
+
+  /* États */
+  --fr-danger: #fb7185;
+  --fr-danger-soft: rgba(251 113 133 / 12%);
+  --fr-success: #34d399;
+
+  /* Rayons */
+  --fr-radius-sm: 0.5rem;
+  --fr-radius-md: 0.875rem;
+  --fr-radius-lg: 1.25rem;
+  --fr-radius-xl: 1.75rem;
+  --fr-radius-pill: 999px;
+
+  /* Profondeur */
+  --fr-shadow-sm: 0 1px 2px rgba(0 0 0 / 40%);
+  --fr-shadow-md: 0 12px 32px -12px rgba(0 0 0 / 65%);
+  --fr-shadow-lg: 0 32px 64px -24px rgba(0 0 0 / 75%);
+  --fr-glow: 0 0 0 1px var(--fr-accent-line), 0 8px 32px -8px rgba(45 212 191 / 25%);
+
+  --fr-ease: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* -----------------------------------------------------------------------------
+   Pont design tokens → Material : on réécrit les `--mat-sys-*` générés par
+   `mat.theme()` pour que les composants Material (boutons, champs, barres de
+   progression) parlent la même langue que les composants maison.
+   `:root` l'emporte sur le `html` du mixin (spécificité 0,1,0 > 0,0,1).
+   -------------------------------------------------------------------------- */
+:root {
+  --mat-sys-primary: var(--fr-accent);
+  --mat-sys-on-primary: var(--fr-accent-ink);
+  --mat-sys-primary-container: var(--fr-accent-soft);
+  --mat-sys-on-primary-container: #a7f3e9;
+  --mat-sys-secondary-container: var(--fr-accent-soft);
+  --mat-sys-on-secondary-container: #cbf7ee;
+
+  --mat-sys-background: var(--fr-bg);
+  --mat-sys-surface: var(--fr-bg);
+  --mat-sys-surface-dim: var(--fr-bg);
+  --mat-sys-surface-bright: #1b2230;
+  --mat-sys-surface-container-lowest: #0a0d12;
+  --mat-sys-surface-container-low: #0d1118;
+  --mat-sys-surface-container: #11161e;
+  --mat-sys-surface-container-high: #161c26;
+  --mat-sys-surface-container-highest: #1c2430;
+
+  --mat-sys-on-surface: var(--fr-text);
+  --mat-sys-on-surface-variant: var(--fr-text-muted);
+  --mat-sys-outline: rgba(255 255 255 / 22%);
+  --mat-sys-outline-variant: var(--fr-border);
+
+  --mat-sys-error: var(--fr-danger);
+  --mat-sys-on-error: #2a0710;
+
+  --mat-sys-inverse-surface: #e8ecf3;
+  --mat-sys-inverse-on-surface: #0b0e14;
+}
+
+/* =============================================================================
+   Base
+   ============================================================================= */
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: var(--fr-bg);
+  color: var(--fr-text);
+  font: var(--mat-sys-body-medium);
+  font-family: Inter, 'Helvetica Neue', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Halo d'ambiance : deux voiles radiaux fixes, sous le contenu. Ils donnent la
+   profondeur du fond sans peser sur le scroll (pas de repaint, `position: fixed`). */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(60rem 40rem at 12% -10%, rgba(45 212 191 / 10%), transparent 60%),
+    radial-gradient(50rem 36rem at 95% 0%, rgba(56 189 248 / 8%), transparent 55%),
+    radial-gradient(40rem 30rem at 50% 110%, rgba(99 102 241 / 7%), transparent 60%);
+}
+
+:focus-visible {
+  outline: 2px solid var(--fr-accent);
+  outline-offset: 2px;
+  border-radius: var(--fr-radius-sm);
+}
+
+::selection {
+  background: var(--fr-accent-line);
+  color: #fff;
+}
+
+/* Barres de défilement discrètes (WebKit + Firefox) */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255 255 255 / 12%) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: rgba(255 255 255 / 10%);
+  border: 3px solid transparent;
+  border-radius: var(--fr-radius-pill);
+  background-clip: content-box;
+
+  &:hover {
+    background: rgba(255 255 255 / 18%);
+    background-clip: content-box;
+  }
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* =============================================================================
+   Primitives partagées (utilisées par plusieurs features)
+   ============================================================================= */
+
+/* Panneau vitré : la brique de base de toutes les cartes. */
+.fr-panel {
+  background: var(--fr-surface-1);
+  border: 1px solid var(--fr-border);
+  border-radius: var(--fr-radius-lg);
+  box-shadow: var(--fr-shadow-md);
+  backdrop-filter: blur(16px);
+}
+
+.fr-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.625rem;
+  border: 1px solid var(--fr-border);
+  border-radius: var(--fr-radius-pill);
+  background: var(--fr-surface-2);
+  color: var(--fr-text-muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.fr-chip--accent {
+  border-color: var(--fr-accent-line);
+  background: var(--fr-accent-soft);
+  color: var(--fr-accent);
+}
+
+/* Surtitre en capitales : sert de fil conducteur en haut de chaque écran. */
+.fr-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--fr-accent);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.fr-title {
+  margin: 0.75rem 0 0;
+  font-size: clamp(1.75rem, 1.2rem + 1.8vw, 2.5rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.fr-subtitle {
+  margin: 0.625rem 0 0;
+  max-width: 46ch;
+  color: var(--fr-text-muted);
+  font-size: 0.9375rem;
+  line-height: 1.6;
+}
+
+/* Dégradé appliqué au texte (nom de marque, chiffres mis en avant). */
+.fr-gradient-text {
+  background: var(--fr-gradient);
+  background-clip: text;
+  color: transparent;
+}
+
+/* =============================================================================
+   Ajustements Material
+   ============================================================================= */
+.mat-mdc-raised-button,
+.mat-mdc-unelevated-button,
+.mat-mdc-outlined-button,
+.mat-mdc-button {
+  --mdc-text-button-label-text-weight: 600;
+
+  font-weight: 600 !important;
+  letter-spacing: 0.01em !important;
+  transition: transform 150ms var(--fr-ease), box-shadow 150ms var(--fr-ease);
+
+  &:not(:disabled):hover {
+    transform: translateY(-1px);
+  }
+}
+
+/* Le bouton primaire porte le dégradé de la charte plutôt qu'un aplat. */
+.mat-mdc-raised-button:not(:disabled).mat-primary,
+.mat-mdc-raised-button:not(:disabled) {
+  background: var(--fr-gradient);
+  color: var(--fr-accent-ink);
+  box-shadow: 0 8px 24px -10px rgba(45 212 191 / 55%);
+
+  &:hover {
+    box-shadow: 0 14px 32px -10px rgba(45 212 191 / 70%);
+  }
+}
+
+.mat-mdc-progress-bar {
+  --mdc-linear-progress-track-color: var(--fr-surface-2);
+
+  border-radius: var(--fr-radius-pill);
+  overflow: hidden;
+}

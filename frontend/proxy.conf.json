@@ -1,0 +1,5 @@
+{
+  "/ingest": { "target": "http://localhost:8000", "secure": false },
+  "/query": { "target": "http://localhost:8000", "secure": false },
+  "/health": { "target": "http://localhost:8000", "secure": false }
+}

@@ -1,0 +1,11 @@
+/* tsconfig dédié aux tests E2E Playwright (hors du build Angular).
+   Scopé `types: ["node"]` pour exposer les globals Node (ex. `Buffer`) sans les laisser
+   fuiter dans le code navigateur — tsconfig.app.json garde `types: []`. */
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./out-tsc/e2e",
+    "types": ["node"]
+  },
+  "include": ["**/*.ts"]
+}

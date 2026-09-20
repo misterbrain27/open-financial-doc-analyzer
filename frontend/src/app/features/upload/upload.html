@@ -1,0 +1,135 @@
+<section class="page">
+  <header class="page__head">
+    <span class="fr-eyebrow">
+      <span class="dot" aria-hidden="true"></span>
+      Ingestion
+    </span>
+    <h1 class="fr-title">Ajoutez un rapport financier</h1>
+    <p class="fr-subtitle">
+      Déposez un PDF (rapport annuel, document AMF). Il est découpé, vectorisé, puis interrogeable
+      dans le chat avec ses sources.
+    </p>
+  </header>
+
+  <input
+    type="file"
+    accept=".pdf"
+    #fileInput
+    hidden
+    (change)="select(fileInput.files?.[0] ?? null); fileInput.value = ''"
+  />
+
+  <!-- Zone de dépôt : cliquable et cible d'un drag & drop. -->
+  <div
+    class="dropzone"
+    [class.dropzone--active]="dragging()"
+    [class.dropzone--filled]="!!selectedFile()"
+    (dragover)="onDragOver($event)"
+    (dragleave)="onDragLeave()"
+    (drop)="onDrop($event)"
+  >
+    @if (selectedFile(); as file) {
+      <div class="file">
+        <span class="file__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+               stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z" />
+            <path d="M14 3v5h5M9 13h6M9 17h4" />
+          </svg>
+        </span>
+        <span class="file__meta">
+          <span class="file__name">{{ file.name }}</span>
+          <span class="file__size">PDF · {{ fileSize() }}</span>
+        </span>
+        <button
+          class="file__clear"
+          type="button"
+          aria-label="Retirer le fichier"
+          [disabled]="uploading()"
+          (click)="clear()"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"
+               stroke-linecap="round" aria-hidden="true">
+            <path d="M6 6l12 12M18 6 6 18" />
+          </svg>
+        </button>
+      </div>
+    } @else {
+      <button class="dropzone__trigger" type="button" (click)="fileInput.click()">
+        <span class="dropzone__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+               stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5" />
+            <path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
+          </svg>
+        </span>
+        <span class="dropzone__title">Glissez votre PDF ici</span>
+        <span class="dropzone__hint">ou cliquez pour parcourir vos fichiers</span>
+      </button>
+    }
+
+    @if (uploading()) {
+      <div class="progress">
+        <mat-progress-bar mode="indeterminate" />
+        <p class="progress__label">Ingestion en cours — extraction, découpage et vectorisation…</p>
+      </div>
+    }
+  </div>
+
+  <div class="actions">
+    <button
+      mat-raised-button
+      color="primary"
+      type="button"
+      [disabled]="!selectedFile() || uploading()"
+      (click)="onSubmit(selectedFile())"
+    >
+      {{ uploading() ? 'Envoi en cours…' : 'Lancer l’ingestion' }}
+    </button>
+
+    @if (selectedFile() && !uploading()) {
+      <button mat-stroked-button type="button" (click)="fileInput.click()">Changer de fichier</button>
+    }
+  </div>
+
+  @if (result(); as doc) {
+    <div class="fr-panel card card--success" role="status">
+      <span class="card__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round">
+          <path d="m5 12.5 4.5 4.5L19 7" />
+        </svg>
+      </span>
+      <div class="card__body">
+        <p class="card__title">Document ingéré</p>
+        <p class="card__text">{{ doc.source_path }}</p>
+        <div class="card__chips">
+          <span class="fr-chip fr-chip--accent">#{{ doc.id }}</span>
+          @if (doc.company) {
+            <span class="fr-chip">{{ doc.company }}</span>
+          }
+          @if (doc.year) {
+            <span class="fr-chip">{{ doc.year }}</span>
+          }
+        </div>
+        <p class="card__hint">Passez à l’onglet Chat pour l’interroger.</p>
+      </div>
+    </div>
+  }
+
+  @if (error(); as message) {
+    <div class="fr-panel card card--error" role="alert">
+      <span class="card__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"
+             stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 8v5M12 16.5h.01" />
+          <circle cx="12" cy="12" r="9" />
+        </svg>
+      </span>
+      <div class="card__body">
+        <p class="card__title">Échec de l’ingestion</p>
+        <p class="card__text">{{ message }}</p>
+      </div>
+    </div>
+  }
+</section>
