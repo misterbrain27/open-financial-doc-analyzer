@@ -70,12 +70,8 @@ async def evaluate() -> None:
 
     async with async_session() as session:
         for q in questions:
-            results = await search(
-                q["question"], session, k=K
-            )  # pas de filtre : retrieval brut
-            retrieved_pages = [
-                r.chunk.page_number for r in results
-            ]  # ordonné par rang (1 = top)
+            results = await search(q["question"], session, k=K)  # pas de filtre : retrieval brut
+            retrieved_pages = [r.chunk.page_number for r in results]  # ordonné par rang (1 = top)
             expected = set(q["expected_pages"])
 
             # recall@k : au moins une page attendue présente dans les k premiers résultats.
