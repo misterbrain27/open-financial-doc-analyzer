@@ -26,7 +26,7 @@ jobs:
         run: ruff check --config backend/pyproject.toml backend eval
 
       - name: Ruff format --check
-        run: ruff format --check --config backend/pyproject.toml eval
+        run: ruff format --check --config backend/pyproject.toml backend eval
 
   test:
     runs-on: ubuntu-latest
