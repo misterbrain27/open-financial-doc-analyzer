@@ -15,7 +15,7 @@ from dataclasses import dataclass
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.rag.llm import LLMClient, get_llm_client
-from app.retrieval.search import SearchResult, search
+from app.retrieval.search import SearchResult, hybrid_search
 
 SYSTEM_PROMPT = (
     "Tu es un assistant d'analyse de documents financiers. Réponds uniquement à partir des "
@@ -76,7 +76,7 @@ async def answer_query(
     Le texte de la réponse est streamé (`RagAnswer.stream`) ; les sources, elles, sont déjà
     connues à cet instant (issues de la recherche, pas de la génération).
     """
-    results = await search(query, session, k=k, company=company, year=year)
+    results = await hybrid_search(query, session, k=k, company=company, year=year)
     sources = _build_sources(results)
     client = llm_client or get_llm_client()
 
