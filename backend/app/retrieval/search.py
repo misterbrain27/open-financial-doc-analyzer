@@ -122,3 +122,60 @@ async def search(
         SearchResult(chunk=chunk, similarity=1 - distance, company=doc_company, year=doc_year)
         for chunk, distance, doc_company, doc_year in result
     ]
+
+
+# Constante d'amortissement RRF (valeur usuelle) : adoucit l'écart entre rang 1 et rang 2,
+# évite qu'un seul canal n'écrase l'autre à lui seul.
+RRF_K = 60
+
+
+async def hybrid_search(
+    query: str,
+    session: AsyncSession,
+    k: int = 5,
+    *,
+    company: str | None = None,
+    year: int | None = None,
+    fetch_k: int = 20,
+) -> list[SearchResult]:
+    """Recherche HYBRIDE : fusionne `search()` (dense) et `lexical_search()` par RRF.
+
+    Récupère `fetch_k` candidats de chaque canal (plus que `k`, pour donner de la matière à la
+    fusion), puis classe par score de *Reciprocal Rank Fusion* : chaque chunk cumule
+    `1 / (RRF_K + rang)` pour chaque liste où il apparaît. On ne fusionne JAMAIS les scores bruts
+    (cosinus vs `ts_rank_cd`, échelles incomparables) — seuls les RANGS comptent.
+
+    Args:
+        query: Texte à rechercher.
+        session: Session SQLAlchemy asynchrone.
+        k: Nombre de résultats à renvoyer, après fusion.
+        company: Si fourni, restreint aux chunks du document de cette entreprise.
+        year: Si fourni, restreint aux chunks du document de cette année.
+        fetch_k: Nombre de candidats récupérés par canal, avant fusion.
+
+    Returns:
+        Liste de `SearchResult` triés par score RRF décroissant (`similarity` porte ce score RRF,
+        non comparable aux similarités des canaux d'origine). En cas d'égalité de score, le tri
+        stable de Python conserve l'ordre d'insertion dans `rrf_scores` : le canal dense (itéré en
+        premier) l'emporte.
+    """
+    vector_results = await search(query, session, k=fetch_k, company=company, year=year)
+    lexical_results = await lexical_search(query, session, k=fetch_k, company=company, year=year)
+
+    rrf_scores: dict[int, float] = {}
+    result_by_chunk_id: dict[int, SearchResult] = {}
+    for results in (vector_results, lexical_results):
+        for rank, result in enumerate(results, start=1):
+            rrf_scores[result.chunk.id] = rrf_scores.get(result.chunk.id, 0.0) + 1 / (RRF_K + rank)
+            result_by_chunk_id.setdefault(result.chunk.id, result)
+
+    ranked_ids = sorted(rrf_scores, key=lambda chunk_id: rrf_scores[chunk_id], reverse=True)
+    return [
+        SearchResult(
+            chunk=result_by_chunk_id[chunk_id].chunk,
+            similarity=rrf_scores[chunk_id],
+            company=result_by_chunk_id[chunk_id].company,
+            year=result_by_chunk_id[chunk_id].year,
+        )
+        for chunk_id in ranked_ids[:k]
+    ]

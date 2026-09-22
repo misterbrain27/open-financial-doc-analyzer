@@ -1,14 +1,17 @@
 """Évaluation du retrieval RAG : recall@k et MRR sur `eval/questions.jsonl`.
 
-Rejoue chaque question du jeu d'évaluation dans la recherche sémantique (`retrieval.search`)
-et mesure la qualité du *retrieval* AVANT la génération :
+Rejoue chaque question du jeu d'évaluation dans la recherche HYBRIDE (`retrieval.hybrid_search`,
+fusion RRF dense + lexical, Phase 9) et mesure la qualité du *retrieval* AVANT la génération :
 
 - recall@k : la bonne page est-elle quelque part dans le top-k ? (binaire par question)
 - MRR      : à quel rang sort la première bonne page ? (1/rang, moyenné)
 
 La vérité-terrain est au niveau **page** : un résultat est pertinent si son `page_number`
 figure dans les `expected_pages` de la question. On n'applique volontairement **aucun filtre**
-company/year ici, afin de mesurer le retrieval sémantique brut (cf. décision Phase 8).
+company/year ici, afin de mesurer le retrieval brut (cf. décision Phase 8).
+
+Baseline **vectoriel pur** (Phase 8, avant l'hybride) : recall@5=0.933, MRR=0.889 — conservée dans
+`doc/phase-8-eval.md` et l'historique git de ce fichier, pour comparer avant/après (Phase 9).
 
 Sortie : un rapport console (une ligne par question + résumé) et un `eval/report.json`
 reproductible (métriques globales + détail par question) pour versionner/comparer les runs.
@@ -21,7 +24,7 @@ import json
 from pathlib import Path
 
 from app.db import async_session
-from app.retrieval.search import search
+from app.retrieval.search import hybrid_search
 
 K = 5
 QUESTIONS_PATH = Path(__file__).parent / "questions.jsonl"
@@ -57,7 +60,7 @@ def build_verdict(recall: float, mrr: float, num_miss: int, num_weak: int) -> st
     if num_miss or num_weak:
         verdict += (
             f" À corriger : {num_miss} ratée(s) et {num_weak} mal classée(s) "
-            f"(piste : recherche hybride BM25 + vectoriel, Phase 9)."
+            f"(piste : reranking cross-encoder, cf. stretch Phase 9)."
         )
     else:
         verdict += " Aucun cas problématique."
@@ -70,8 +73,12 @@ async def evaluate() -> None:
 
     async with async_session() as session:
         for q in questions:
-            results = await search(q["question"], session, k=K)  # pas de filtre : retrieval brut
-            retrieved_pages = [r.chunk.page_number for r in results]  # ordonné par rang (1 = top)
+            results = await hybrid_search(
+                q["question"], session, k=K
+            )  # pas de filtre : brut
+            retrieved_pages = [
+                r.chunk.page_number for r in results
+            ]  # ordonné par rang (1 = top)
             expected = set(q["expected_pages"])
 
             # recall@k : au moins une page attendue présente dans les k premiers résultats.
