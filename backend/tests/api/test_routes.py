@@ -117,7 +117,7 @@ class FakeLLMClient(LLMClient):
 
 class FailingLLMClient(LLMClient):
     async def stream_chat(self, messages: list[dict[str, str]]) -> AsyncIterator[str]:
-        raise RuntimeError("quota Mistral dépassé")
+        raise RuntimeError("quota Groq dépassé")
         yield  # pragma: no cover — needed so the method stays an async generator
 
 
@@ -176,4 +176,4 @@ async def test_query_streams_error_event_on_llm_failure(
         body = "".join([chunk async for chunk in response.aiter_text()])
 
     assert "event: error" in body
-    assert "quota Mistral" in body
+    assert "quota Groq" in body

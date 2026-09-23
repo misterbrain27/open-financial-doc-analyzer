@@ -1,15 +1,15 @@
-{"id": "q1", "question": "Quelle est la forme juridique de la société ?", "company": "novatech", "year": 2025, "expected_pages": [1], "expected_answer": "SARL"}
-{"id": "q2", "question": "Quel est le montant du capital social ?", "company": "novatech", "year": 2025, "expected_pages": [1], "expected_answer": "50000"}
-{"id": "q3", "question": "Quel est le numéro SIREN de la société ?", "company": "novatech", "year": 2025, "expected_pages": [1], "expected_answer": "812345678"}
-{"id": "q4", "question": "Quel est le code APE / NAF ?", "company": "novatech", "year": 2025, "expected_pages": [1], "expected_answer": "4651Z"}
-{"id": "q5", "question": "Dans quelle ville se situe le siège social ?", "company": "novatech", "year": 2025, "expected_pages": [1], "expected_answer": "Villeurbanne"}
-{"id": "q6", "question": "Quel est le montant net des immobilisations financières ?", "company": "novatech", "year": 2025, "expected_pages": [2], "expected_answer": "6200"}
-{"id": "q7", "question": "Quel est le total général du bilan (actif net 2025) ?", "company": "novatech", "year": 2025, "expected_pages": [2], "expected_answer": "457150"}
-{"id": "q8", "question": "Quel est le montant des capitaux propres ?", "company": "novatech", "year": 2025, "expected_pages": [2], "expected_answer": "205650"}
-{"id": "q9", "question": "Quel est le montant total des dettes ?", "company": "novatech", "year": 2025, "expected_pages": [2], "expected_answer": "245000"}
-{"id": "q10", "question": "Quel est le montant net des créances clients ?", "company": "novatech", "year": 2025, "expected_pages": [2], "expected_answer": "150400"}
-{"id": "q11", "question": "Quel est le chiffre d'affaires de l'exercice 2025 ?", "company": "novatech", "year": 2025, "expected_pages": [3], "expected_answer": "796700"}
-{"id": "q12", "question": "Quel est le montant des ventes de marchandises ?", "company": "novatech", "year": 2025, "expected_pages": [3], "expected_answer": "612400"}
-{"id": "q13", "question": "Quel est le montant des salaires et traitements ?", "company": "novatech", "year": 2025, "expected_pages": [3], "expected_answer": "168400"}
-{"id": "q14", "question": "Quel est le résultat d'exploitation ?", "company": "novatech", "year": 2025, "expected_pages": [3], "expected_answer": "51750"}
-{"id": "q15", "question": "Quel est le montant des charges d'intérêts ?", "company": "novatech", "year": 2025, "expected_pages": [3], "expected_answer": "5800"}
+{"id": "q1", "question": "Quelle est la forme juridique de la société ?", "company": "Super-Tartanpion-junior", "year": 2025, "expected_pages": [1], "expected_answer": "SARL"}
+{"id": "q2", "question": "Quel est le montant du capital social ?", "company": "Super-Tartanpion-junior", "year": 2025, "expected_pages": [1], "expected_answer": "120000"}
+{"id": "q3", "question": "Quel est le numéro SIREN de la société ?", "company": "Super-Tartanpion-junior", "year": 2025, "expected_pages": [1], "expected_answer": "00000001"}
+{"id": "q4", "question": "Quel est le code APE / NAF ?", "company": "Super-Tartanpion-junior", "year": 2025, "expected_pages": [1], "expected_answer": "4941B"}
+{"id": "q5", "question": "Dans quelle ville se situe le siège social ?", "company": "Super-Tartanpion-junior", "year": 2025, "expected_pages": [1], "expected_answer": "Metz"}
+{"id": "q6", "question": "Quel est le montant net des immobilisations financières ?", "company": "Super-Tartanpion-junior", "year": 2025, "expected_pages": [2], "expected_answer": "12700"}
+{"id": "q7", "question": "Quel est le total général du bilan (actif net 2025) ?", "company": "Super-Tartanpion-junior", "year": 2025, "expected_pages": [2], "expected_answer": "789000"}
+{"id": "q8", "question": "Quel est le montant des capitaux propres ?", "company": "Super-Tartanpion-junior", "year": 2025, "expected_pages": [2], "expected_answer": "477100"}
+{"id": "q9", "question": "Quel est le montant total des dettes ?", "company": "Super-Tartanpion-junior", "year": 2025, "expected_pages": [2], "expected_answer": "789000"}
+{"id": "q10", "question": "Quel est le montant net des créances clients ?", "company": "Super-Tartanpion-junior", "year": 2025, "expected_pages": [2], "expected_answer": "125500"}
+{"id": "q11", "question": "Quel est le chiffre d'affaires de l'exercice 2025 ?", "company": "Super-Tartanpion-junior", "year": 2025, "expected_pages": [3], "expected_answer": "1136200"}
+{"id": "q12", "question": "Quel est le montant des ventes de marchandises ?", "company": "Super-Tartanpion-junior", "year": 2025, "expected_pages": [3], "expected_answer": "709200"}
+{"id": "q13", "question": "Quel est le montant des salaires et traitements ?", "company": "Super-Tartanpion-junior", "year": 2025, "expected_pages": [3], "expected_answer": "155100"}
+{"id": "q14", "question": "Quel est le résultat d'exploitation ?", "company": "Super-Tartanpion-junior", "year": 2025, "expected_pages": [3], "expected_answer": "301600"}
+{"id": "q15", "question": "Quel est le montant des charges d'intérêts ?", "company": "Super-Tartanpion-junior", "year": 2025, "expected_pages": [3], "expected_answer": "15500"}

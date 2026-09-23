@@ -32,10 +32,10 @@ class Settings(BaseSettings):
     ollama_base_url: str = "http://host.docker.internal:11434"
     embedding_model: str = "bge-m3"
 
-    # Generation — active provider: "mistral" or "ollama"
-    llm_provider: str = "mistral"
-    mistral_api_key: str = ""
-    mistral_model: str = "mistral-small-latest"
+    # Generation — active provider: "groq" or "ollama"
+    llm_provider: str = "groq"
+    groq_api_key: str = ""
+    groq_model: str = "openai/gpt-oss-120b"
 
     # Directory for PDFs uploaded via /ingest (relative to the process's WORKDIR;
     # mounted on the host's `./data/raw` in local/debug — see docker-compose.override.yml)
