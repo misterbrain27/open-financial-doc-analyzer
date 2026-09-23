@@ -78,9 +78,7 @@ async def evaluate() -> None:
     async with async_session() as session:
         for q in questions:
             results = await hybrid_search(q["question"], session, k=K)  # no filter: raw
-            retrieved_pages = [
-                r.chunk.page_number for r in results
-            ]  # ordered by rank (1 = top)
+            retrieved_pages = [r.chunk.page_number for r in results]  # ordered by rank (1 = top)
             expected = set(q["expected_pages"])
 
             # recall@k: at least one expected page present in the top-k results.
