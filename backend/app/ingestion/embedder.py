@@ -8,7 +8,7 @@ EMBEDDING_DIM = 1024
 async def embed_texts(
     texts: list[str], *, client: httpx.AsyncClient | None = None
 ) -> list[list[float]]:
-    """Appelle l'API Ollama pour générer les embeddings des textes fournis."""
+    """Calls the Ollama API to generate embeddings for the given texts."""
     if len(texts) == 0:
         return []
     url = settings.ollama_base_url + "/api/embed"
@@ -17,7 +17,7 @@ async def embed_texts(
         client = httpx.AsyncClient()
     try:
         response = await client.post(url, json={"model": settings.embedding_model, "input": texts})
-        data = response.json()  # transforme la réponse JSON en dict Python
+        data = response.json()  # turns the JSON response into a Python dict
         for vector in data["embeddings"]:
             if len(vector) != EMBEDDING_DIM:
                 raise ValueError(

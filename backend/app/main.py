@@ -1,11 +1,11 @@
-"""Point d'entrée FastAPI.
+"""FastAPI entry point.
 
-Application minimale (sonde `/health`) enrichie en Phase 6 des routes RAG (`/ingest`,
-`/query`) — voir `app/api/routes.py`.
+Minimal application (`/health` probe) enriched in Phase 6 with the RAG routes (`/ingest`,
+`/query`) — see `app/api/routes.py`.
 
-Documentation : Swagger UI est servi à /docs avec un thème sombre. FastAPI génère
-tout l'OpenAPI automatiquement ; on désactive seulement le /docs par défaut pour
-réinjecter notre feuille de style sombre (voir `swagger_ui_dark`).
+Documentation: Swagger UI is served at /docs with a dark theme. FastAPI generates
+the whole OpenAPI spec automatically; we only disable the default /docs to
+re-inject our dark stylesheet (see `swagger_ui_dark`).
 """
 
 from __future__ import annotations
@@ -38,18 +38,18 @@ streamée en SSE, avec citation des sources).
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
-    """Active pgvector et crée les tables au démarrage (`create_all`, idempotent).
+    """Enables pgvector and creates the tables on startup (`create_all`, idempotent).
 
-    Sans ce hook, une base fraîche (nouveau volume, `make clean`) n'a aucun schéma :
-    `/ingest`/`/query` échoueraient sur des tables inexistantes tant que
-    `scripts/ingest_cli.py` n'a pas été lancé manuellement.
+    Without this hook, a fresh database (new volume, `make clean`) has no schema:
+    `/ingest`/`/query` would fail on non-existent tables until
+    `scripts/ingest_cli.py` has been run manually.
     """
     await init_db()
     yield
 
 
-# `docs_url=None` : on reprend la main sur /docs pour injecter la CSS sombre
-# (voir la route `swagger_ui_dark` plus bas). /redoc reste au thème par défaut.
+# `docs_url=None`: we take over /docs to inject the dark CSS
+# (see the `swagger_ui_dark` route below). /redoc keeps the default theme.
 app = FastAPI(
     title="Financial Doc Analyzer API",
     description=DESCRIPTION,
@@ -66,8 +66,8 @@ app = FastAPI(
 
 app.include_router(api_router)
 
-# Ressources statiques (CSS du thème Swagger). `Path(__file__).parent` résout aussi bien
-# en exécution hôte que dans le conteneur (répertoire /app/app/static).
+# Static assets (Swagger theme CSS). `Path(__file__).parent` resolves correctly
+# both on host execution and inside the container (directory /app/app/static).
 app.mount(
     "/static",
     StaticFiles(directory=Path(__file__).parent / "static"),
@@ -77,7 +77,7 @@ app.mount(
 
 @app.get("/docs", include_in_schema=False)
 async def swagger_ui_dark() -> HTMLResponse:
-    """Swagger UI avec thème sombre (CSS servie depuis /static)."""
+    """Swagger UI with a dark theme (CSS served from /static)."""
     return get_swagger_ui_html(
         openapi_url=app.openapi_url or "/openapi.json",
         title=f"{app.title} — docs",
@@ -86,7 +86,7 @@ async def swagger_ui_dark() -> HTMLResponse:
 
 
 class HealthResponse(BaseModel):
-    """Réponse de la sonde de disponibilité."""
+    """Response of the availability probe."""
 
     status: str
     env: str
@@ -94,5 +94,5 @@ class HealthResponse(BaseModel):
 
 @app.get("/health", tags=["health"], summary="Sonde de disponibilité")
 async def health() -> HealthResponse:
-    """Vérifie que l'application répond et expose l'environnement actif."""
+    """Checks that the application is responding and exposes the active environment."""
     return HealthResponse(status="ok", env=settings.app_env)

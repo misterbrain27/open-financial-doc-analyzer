@@ -18,72 +18,6 @@ class SearchResult:
     year: int | None
 
 
-def _or_tsquery(query: str):
-    """Construit une `tsquery` française reliant les termes par OU (`|`).
-
-    `plainto_tsquery` relie les lexèmes par ET (`&`), trop strict pour nos questions : « code
-    APE / NAF » exigerait le lexème `naf`, **absent du corpus** → zéro match, et l'hybride n'y
-    gagnerait rien (cf. Phase 8, q4). En OU, un chunk qui contient *au moins un* terme matche,
-    et `ts_rank_cd` classe par densité/proximité (la page 1 a `code` + `ape` → remonte en tête).
-
-    Technique 100 % SQL et sûre : `plainto_tsquery` fait déjà le nettoyage délicat (stop-words,
-    stemming, ponctuation) ; on remplace juste ` & ` par ` | ` dans sa forme textuelle, puis on
-    recaste en `tsquery`. (Construire un `to_tsquery` à la main serait fragile : un stop-word
-    adjacent à un opérateur le fait planter.)
-    """
-    plain = func.plainto_tsquery("french", query)
-    return cast(func.replace(cast(plain, Text), " & ", " | "), TSQUERY)
-
-
-async def lexical_search(
-    query: str,
-    session: AsyncSession,
-    k: int = 5,
-    *,
-    company: str | None = None,
-    year: int | None = None,
-) -> list[SearchResult]:
-    """Recherche LEXICALE (full-text Postgres) — le pendant mot-clé de `search()`.
-
-    Classe les chunks par `ts_rank_cd` sur la colonne générée `Chunk.tsv` (config `french`).
-    Rattrape les lookups exacts (codes, identifiants) que le vectoriel manque — cf. Phase 8
-    (q4 code APE, q2 capital social). Les deux signaux seront fusionnés par RRF (Phase 9, B).
-
-    Même signature et même type de retour que `search()`, à une nuance près : pour un résultat
-    lexical, `SearchResult.similarity` porte le score **`ts_rank_cd`** (non borné [0, +∞[), pas
-    une similarité cosinus. L'ordre est ce qui compte — la fusion RRF ne regarde que les rangs.
-
-    Args:
-        query: Texte à rechercher.
-        session: Session SQLAlchemy asynchrone.
-        k: Nombre de résultats à renvoyer.
-        company: Si fourni, restreint aux chunks du document de cette entreprise.
-        year: Si fourni, restreint aux chunks du document de cette année.
-
-    Returns:
-        Liste de `SearchResult` triés par score lexical décroissant.
-    """
-    tsquery = _or_tsquery(query)
-    rank = func.ts_rank_cd(Chunk.tsv, tsquery).label("rank")
-    stmt = select(Chunk, rank, Document.company, Document.year).join(
-        Document, Chunk.document_id == Document.id
-    )
-    # `@@` : ne garder que les chunks dont le `tsv` matche la requête (sinon ts_rank_cd = 0
-    # pour tout le reste et on remonterait du bruit).
-    stmt = stmt.where(Chunk.tsv.bool_op("@@")(tsquery))
-    if company is not None:
-        # Même filtre insensible à la casse que `search()`.
-        stmt = stmt.where(func.lower(Document.company) == company.lower())
-    if year is not None:
-        stmt = stmt.where(Document.year == year)
-    stmt = stmt.order_by(rank.desc()).limit(k)
-    result = await session.execute(stmt)
-    return [
-        SearchResult(chunk=chunk, similarity=score, company=doc_company, year=doc_year)
-        for chunk, score, doc_company, doc_year in result
-    ]
-
-
 async def search(
     query: str,
     session: AsyncSession,
@@ -92,17 +26,17 @@ async def search(
     company: str | None = None,
     year: int | None = None,
 ) -> list[SearchResult]:
-    """Recherche un texte dans les chunks et renvoie les résultats triés par pertinence.
+    """Searches for text within chunks and returns results sorted by relevance.
 
     Args:
-        query: Texte à rechercher.
-        session: Session SQLAlchemy asynchrone.
-        k: Nombre de résultats à renvoyer.
-        company: Si fourni, restreint aux chunks du document de cette entreprise.
-        year: Si fourni, restreint aux chunks du document de cette année.
+        query: Text to search for.
+        session: Async SQLAlchemy session.
+        k: Number of results to return.
+        company: If provided, restricts to chunks from this company's document.
+        year: If provided, restricts to chunks from this year's document.
 
     Returns:
-        Liste de `SearchResult` triés par pertinence (score décroissant).
+        List of `SearchResult` sorted by relevance (descending score).
     """
     vectors = await embed_texts([query])
     query_vector = vectors[0]
@@ -124,8 +58,75 @@ async def search(
     ]
 
 
-# Constante d'amortissement RRF (valeur usuelle) : adoucit l'écart entre rang 1 et rang 2,
-# évite qu'un seul canal n'écrase l'autre à lui seul.
+def _or_tsquery(query: str):
+    """Builds a French `tsquery` joining terms with OR (`|`).
+
+    `plainto_tsquery` joins lexemes with AND (`&`), too strict for our questions: "APE/NAF
+    code" would require the lexeme `naf`, **absent from the corpus** → zero matches, and the
+    hybrid search wouldn't gain anything from it (see Phase 8, q4). With OR, a chunk that
+    contains *at least one* term matches, and `ts_rank_cd` ranks by density/proximity (page 1
+    has `code` + `ape` → rises to the top).
+
+    A 100% SQL, safe technique: `plainto_tsquery` already does the delicate cleanup (stop
+    words, stemming, punctuation); we just replace ` & ` with ` | ` in its textual form, then
+    recast it to `tsquery`. (Hand-building a `to_tsquery` would be fragile: a stop word next
+    to an operator makes it crash.)
+    """
+    plain = func.plainto_tsquery("french", query)
+    return cast(func.replace(cast(plain, Text), " & ", " | "), TSQUERY)
+
+
+async def lexical_search(
+    query: str,
+    session: AsyncSession,
+    k: int = 5,
+    *,
+    company: str | None = None,
+    year: int | None = None,
+) -> list[SearchResult]:
+    """LEXICAL search (Postgres full-text) — the keyword counterpart of `search()`.
+
+    Ranks chunks by `ts_rank_cd` on the generated `Chunk.tsv` column (`french` config).
+    Catches exact lookups (codes, identifiers) that the vector search misses — see Phase 8
+    (q4 APE code, q2 share capital). Both signals get merged via RRF (Phase 9, B).
+
+    Same signature and same return type as `search()`, with one nuance: for a lexical
+    result, `SearchResult.similarity` carries the **`ts_rank_cd`** score (unbounded [0, +∞[),
+    not a cosine similarity. What matters is the ORDER — RRF fusion only looks at ranks.
+
+    Args:
+        query: Text to search for.
+        session: Async SQLAlchemy session.
+        k: Number of results to return.
+        company: If provided, restricts to chunks from this company's document.
+        year: If provided, restricts to chunks from this year's document.
+
+    Returns:
+        List of `SearchResult` sorted by descending lexical score.
+    """
+    tsquery = _or_tsquery(query)
+    rank = func.ts_rank_cd(Chunk.tsv, tsquery).label("rank")
+    stmt = select(Chunk, rank, Document.company, Document.year).join(
+        Document, Chunk.document_id == Document.id
+    )
+    # `@@`: keep only chunks whose `tsv` matches the query (otherwise ts_rank_cd = 0
+    # for everything else and we'd surface noise).
+    stmt = stmt.where(Chunk.tsv.bool_op("@@")(tsquery))
+    if company is not None:
+        # Same case-insensitive filter as `search()`.
+        stmt = stmt.where(func.lower(Document.company) == company.lower())
+    if year is not None:
+        stmt = stmt.where(Document.year == year)
+    stmt = stmt.order_by(rank.desc()).limit(k)
+    result = await session.execute(stmt)
+    return [
+        SearchResult(chunk=chunk, similarity=score, company=doc_company, year=doc_year)
+        for chunk, score, doc_company, doc_year in result
+    ]
+
+
+# RRF damping constant (usual value): softens the gap between rank 1 and rank 2,
+# prevents a single channel from overpowering the other on its own.
 RRF_K = 60
 
 
@@ -138,26 +139,26 @@ async def hybrid_search(
     year: int | None = None,
     fetch_k: int = 20,
 ) -> list[SearchResult]:
-    """Recherche HYBRIDE : fusionne `search()` (dense) et `lexical_search()` par RRF.
+    """HYBRID search: merges `search()` (dense) and `lexical_search()` via RRF.
 
-    Récupère `fetch_k` candidats de chaque canal (plus que `k`, pour donner de la matière à la
-    fusion), puis classe par score de *Reciprocal Rank Fusion* : chaque chunk cumule
-    `1 / (RRF_K + rang)` pour chaque liste où il apparaît. On ne fusionne JAMAIS les scores bruts
-    (cosinus vs `ts_rank_cd`, échelles incomparables) — seuls les RANGS comptent.
+    Fetches `fetch_k` candidates from each channel (more than `k`, to give the fusion enough
+    material to work with), then ranks by *Reciprocal Rank Fusion* score: each chunk
+    accumulates `1 / (RRF_K + rank)` for every list it appears in. Raw scores are NEVER
+    merged (cosine vs `ts_rank_cd`, incomparable scales) — only RANKS matter.
 
     Args:
-        query: Texte à rechercher.
-        session: Session SQLAlchemy asynchrone.
-        k: Nombre de résultats à renvoyer, après fusion.
-        company: Si fourni, restreint aux chunks du document de cette entreprise.
-        year: Si fourni, restreint aux chunks du document de cette année.
-        fetch_k: Nombre de candidats récupérés par canal, avant fusion.
+        query: Text to search for.
+        session: Async SQLAlchemy session.
+        k: Number of results to return, after fusion.
+        company: If provided, restricts to chunks from this company's document.
+        year: If provided, restricts to chunks from this year's document.
+        fetch_k: Number of candidates fetched per channel, before fusion.
 
     Returns:
-        Liste de `SearchResult` triés par score RRF décroissant (`similarity` porte ce score RRF,
-        non comparable aux similarités des canaux d'origine). En cas d'égalité de score, le tri
-        stable de Python conserve l'ordre d'insertion dans `rrf_scores` : le canal dense (itéré en
-        premier) l'emporte.
+        List of `SearchResult` sorted by descending RRF score (`similarity` carries this RRF
+        score, not comparable to the original channels' similarities). In case of a score
+        tie, Python's stable sort keeps the insertion order in `rrf_scores`: the dense
+        channel (iterated first) wins.
     """
     vector_results = await search(query, session, k=fetch_k, company=company, year=year)
     lexical_results = await lexical_search(query, session, k=fetch_k, company=company, year=year)

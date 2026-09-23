@@ -1,10 +1,10 @@
-"""Pipeline RAG (Phase 5) : recherche des extraits pertinents (Phase 4), construit un prompt
-augmenté et streame la réponse du LLM (Phase 5 — `rag/llm.py`) avec citations des sources.
+"""RAG pipeline (Phase 5): retrieves relevant excerpts (Phase 4), builds an augmented prompt
+and streams the LLM's response (Phase 5 — `rag/llm.py`) with source citations.
 
-Anti-hallucination / grounding : le prompt système contraint le modèle à ne répondre qu'à
-partir des extraits fournis et à citer leur numéro. Les métadonnées de citation (`Source`)
-viennent directement de la recherche (Phase 4), pas d'une extraction depuis le texte généré —
-elles restent donc fiables même si le modèle se trompe dans ses citations inline.
+Anti-hallucination / grounding: the system prompt constrains the model to answer only from
+the provided excerpts and to cite their number. The citation metadata (`Source`) comes
+directly from the search (Phase 4), not from an extraction of the generated text — so it
+stays reliable even if the model gets its inline citations wrong.
 """
 
 from __future__ import annotations
@@ -71,10 +71,10 @@ async def answer_query(
     year: int | None = None,
     llm_client: LLMClient | None = None,
 ) -> RagAnswer:
-    """Recherche les extraits pertinents puis prépare une réponse groundée avec citations.
+    """Searches for relevant excerpts then prepares a grounded answer with citations.
 
-    Le texte de la réponse est streamé (`RagAnswer.stream`) ; les sources, elles, sont déjà
-    connues à cet instant (issues de la recherche, pas de la génération).
+    The answer text is streamed (`RagAnswer.stream`); the sources, however, are already
+    known at this point (they come from the search, not from generation).
     """
     results = await hybrid_search(query, session, k=k, company=company, year=year)
     sources = _build_sources(results)

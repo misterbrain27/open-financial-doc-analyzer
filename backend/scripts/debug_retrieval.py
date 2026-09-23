@@ -1,9 +1,10 @@
-"""Compare les 3 méthodes de retrieval (vectoriel, lexical, hybride RRF) pour une question.
+"""Compares the 3 retrieval methods (vector, lexical, hybrid RRF) for a given question.
 
-Outil de mise au point de la Phase 9 (recherche hybride) : affiche, côte à côte, ce que chaque
-méthode ramène — utile pour comprendre POURQUOI l'hybride corrige (ou pas) un cas donné, sans
-naviguer à l'aveugle dans la base. Suppose une base déjà initialisée et des documents déjà
-ingérés (`make local` + `ingest_cli.py`) — ce script n'écrit rien, il n'inspecte que l'existant.
+Debugging tool for Phase 9 (hybrid search): displays, side by side, what each method
+returns — useful for understanding WHY the hybrid approach fixes (or doesn't) a given case,
+without navigating the database blindly. Assumes an already-initialized database with
+documents already ingested (`make local` + `ingest_cli.py`) — this script writes nothing, it
+only inspects what already exists.
 """
 
 from __future__ import annotations
@@ -13,8 +14,8 @@ import asyncio
 import sys
 from pathlib import Path
 
-# `scripts/` n'est PAS un package (pyproject ne package que `app*`) : on ajoute `backend/`
-# au sys.path pour pouvoir importer `app.*` quel que soit le dossier courant.
+# `scripts/` is NOT a package (pyproject only packages `app*`): we add `backend/`
+# to sys.path so `app.*` can be imported regardless of the current working directory.
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from app.db import async_session  # noqa: E402

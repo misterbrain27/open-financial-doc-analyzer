@@ -1,13 +1,13 @@
-"""Tests de la recherche HYBRIDE (`hybrid_search`, fusion RRF, Phase 9).
+"""Tests for HYBRID search (`hybrid_search`, RRF fusion, Phase 9).
 
-Le fil rouge est le cas **q4** (Phase 8) : la recherche vectorielle pure classait la page de
-tableaux chiffrés devant la page d'identité pour la question « code APE / NAF ? ». Ces tests
-prouvent, sur un scénario contrôlé, que la fusion RRF inverse cet ordre — un chunk fort au
-lexical mais faible au dense doit passer DEVANT un chunk fort au dense mais absent du lexical.
+The throughline is case **q4** (Phase 8): pure vector search ranked the numbers-table page ahead
+of the identity page for the question "code APE / NAF?". These tests prove, on a controlled
+scenario, that RRF fusion reverses that order — a chunk strong on lexical but weak on dense must
+outrank a chunk strong on dense but absent from lexical.
 
-Les vecteurs sont construits comme dans `test_search.py` (`unit_vector`, similarité cosinus
-prévisible), le texte comme dans `test_lexical_search.py` — combinés ici pour contrôler les DEUX
-canaux à la fois et vérifier le score RRF exact (`RRF_K` importé du module, pas recopié en dur).
+Vectors are built as in `test_search.py` (`unit_vector`, predictable cosine similarity), text as
+in `test_lexical_search.py` — combined here to control BOTH channels at once and verify the exact
+RRF score (`RRF_K` imported from the module, not hardcoded).
 """
 
 import pytest
@@ -20,8 +20,8 @@ from app.retrieval.search import RRF_K, hybrid_search
 
 
 def unit_vector(index: int, *, sign: float = 1.0) -> list[float]:
-    """Vecteur unitaire (une seule coordonnée à `sign`, le reste à 0) — similarité cosinus
-    prévisible face au vecteur de la question (identique, orthogonal, ou opposé)."""
+    """Unit vector (a single coordinate set to `sign`, the rest to 0) — predictable cosine
+    similarity against the question vector (identical, orthogonal, or opposite)."""
     vector = [0.0] * EMBEDDING_DIM
     vector[index] = sign
     return vector
@@ -54,8 +54,8 @@ async def make_chunk(
 
 
 def mock_question_embedding(monkeypatch: pytest.MonkeyPatch) -> None:
-    """La question s'embarque toujours en `unit_vector(0)` — le point de référence face auquel
-    on positionne les chunks (identique, orthogonal, ou opposé) pour contrôler le rang dense."""
+    """The question always embeds to `unit_vector(0)` — the reference point against which
+    chunks are positioned (identical, orthogonal, or opposite) to control the dense rank."""
 
     async def fake_embed_texts(texts: list[str]) -> list[list[float]]:
         return [unit_vector(0)]
@@ -66,28 +66,28 @@ def mock_question_embedding(monkeypatch: pytest.MonkeyPatch) -> None:
 async def test_hybrid_search_recovers_a_match_the_dense_channel_ranks_last(
     db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Cas q4 : un chunk lexicalement fort mais dense-faible passe DEVANT un chunk dense-fort
-    mais absent du lexical — le renversement qui répare le retrieval (cf. Phase 8 : la recherche
-    vectorielle pure classait la page bilan devant la page identité)."""
+    """Case q4: a lexically strong but dense-weak chunk outranks a dense-strong chunk absent
+    from lexical — the reversal that fixes retrieval (see Phase 8: pure vector search ranked the
+    balance-sheet page ahead of the identity page)."""
     mock_question_embedding(monkeypatch)
 
     identity_page = await make_chunk(
         db_session,
         text="Forme juridique : SARL. Code APE : 4651Z.",
-        embedding=unit_vector(1),  # orthogonal à la question → similarité dense = 0.0
+        embedding=unit_vector(1),  # orthogonal to the question → dense similarity = 0.0
         page_number=1,
     )
     balance_page = await make_chunk(
         db_session,
         text="Total du bilan : 457 150 euros.",
-        embedding=unit_vector(0),  # identique à la question → similarité dense = 1.0 (rang 1)
+        embedding=unit_vector(0),  # identical to the question → dense similarity = 1.0 (rank 1)
         page_number=2,
     )
 
     results = await hybrid_search("Quel est le code APE / NAF ?", db_session)
 
-    # Dense seul aurait classé balance_page en tête (similarité 1.0 vs 0.0, cf. Phase 8) — la
-    # fusion inverse l'ordre car identity_page est seule à matcher lexicalement (rang 1 lexical).
+    # Dense alone would have ranked balance_page first (similarity 1.0 vs 0.0, see Phase 8) —
+    # fusion reverses the order because identity_page is the only lexical match (lexical rank 1).
     assert [r.chunk.id for r in results] == [identity_page.id, balance_page.id]
     assert results[0].similarity == pytest.approx(1 / (RRF_K + 2) + 1 / (RRF_K + 1))
     assert results[1].similarity == pytest.approx(1 / (RRF_K + 1))
@@ -96,14 +96,14 @@ async def test_hybrid_search_recovers_a_match_the_dense_channel_ranks_last(
 async def test_hybrid_search_returns_each_chunk_once(
     db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Un chunk présent en tête des DEUX canaux doit apparaître UNE SEULE fois dans le résultat
-    fusionné, avec un score = somme des deux contributions (pas deux entrées séparées)."""
+    """A chunk ranked first on BOTH channels must appear ONLY ONCE in the fused result, with a
+    score equal to the sum of both contributions (not two separate entries)."""
     mock_question_embedding(monkeypatch)
 
     chunk = await make_chunk(
         db_session,
         text="Code APE : 4651Z",
-        embedding=unit_vector(0),  # rang 1 dense ET rang 1 lexical (seul chunk en base)
+        embedding=unit_vector(0),  # dense rank 1 AND lexical rank 1 (only chunk in the database)
     )
 
     results = await hybrid_search("code APE", db_session)
@@ -115,29 +115,29 @@ async def test_hybrid_search_returns_each_chunk_once(
 async def test_hybrid_search_respects_k_after_fusion(
     db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """`k` s'applique APRÈS fusion : avec `fetch_k` par défaut (20) mais `k=2`, un troisième
-    candidat récupéré par les deux canaux ne doit pas survivre à la troncature finale."""
+    """`k` applies AFTER fusion: with the default `fetch_k` (20) but `k=2`, a third candidate
+    retrieved by both channels must not survive the final truncation."""
     mock_question_embedding(monkeypatch)
 
     best_dense = await make_chunk(
         db_session,
-        text="Total du bilan : 457 150 euros.",  # aucun match lexical
-        embedding=unit_vector(0),  # similarité dense = 1.0 → rang 1 dense
+        text="Total du bilan : 457 150 euros.",  # no lexical match
+        embedding=unit_vector(0),  # dense similarity = 1.0 → dense rank 1
     )
     mid_dense_but_lexical_match = await make_chunk(
         db_session,
-        text="Code APE : 4651Z",  # seul chunk à matcher le canal lexical
-        embedding=unit_vector(1),  # similarité dense = 0.0 → rang 2 dense
+        text="Code APE : 4651Z",  # the only chunk matching the lexical channel
+        embedding=unit_vector(1),  # dense similarity = 0.0 → dense rank 2
     )
     worst_dense = await make_chunk(
         db_session,
-        text="Immobilisations financières : 6 200 euros.",  # aucun match lexical
-        embedding=unit_vector(0, sign=-1.0),  # similarité dense = -1.0 → rang 3 dense (pire)
+        text="Immobilisations financières : 6 200 euros.",  # no lexical match
+        embedding=unit_vector(0, sign=-1.0),  # dense similarity = -1.0 → dense rank 3 (worst)
     )
 
     results = await hybrid_search("code APE", db_session, k=2)
 
-    # mid_dense_but_lexical_match gagne malgré un rang dense médiocre (seul soutien lexical) ;
-    # worst_dense, dernier sur les deux canaux, est écarté par la troncature à k=2.
+    # mid_dense_but_lexical_match wins despite a mediocre dense rank (sole lexical support);
+    # worst_dense, last on both channels, is dropped by the truncation at k=2.
     assert [r.chunk.id for r in results] == [mid_dense_but_lexical_match.id, best_dense.id]
     assert worst_dense.id not in {r.chunk.id for r in results}

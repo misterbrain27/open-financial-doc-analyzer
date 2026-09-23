@@ -5,8 +5,8 @@ import asyncio
 import sys
 from pathlib import Path
 
-# `scripts/` n'est PAS un package (pyproject ne package que `app*`) : on ajoute `backend/`
-# au sys.path pour pouvoir importer `app.*` quel que soit le dossier courant.
+# `scripts/` is NOT a package (pyproject only packages `app*`): we add `backend/`
+# to sys.path so `app.*` can be imported regardless of the current working directory.
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from app.db import async_session, init_db  # noqa: E402
@@ -14,7 +14,7 @@ from app.ingestion.pipeline import ingest_pdf  # noqa: E402
 
 
 def iter_pdfs(target: Path) -> list[Path]:
-    """Le fichier lui-même, ou tous les *.pdf triés d'un dossier."""
+    """The file itself, or all *.pdf files sorted from a directory."""
     if target.is_dir():
         return sorted(target.glob("*.pdf"))
     return [target]

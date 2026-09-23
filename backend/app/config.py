@@ -1,8 +1,8 @@
-"""Configuration applicative, pilotée par la variable d'environnement APP_ENV.
+"""Application configuration, driven by the APP_ENV environment variable.
 
-`APP_ENV` ∈ {local, debug, test, prod}. En conteneur, les variables sont injectées par Docker
-Compose ; en exécution sur l'hôte, elles sont lues depuis `.env.<APP_ENV>`.
-Précédence pydantic-settings : variables d'environnement > fichier .env > valeurs par défaut.
+`APP_ENV` ∈ {local, debug, test, prod}. In a container, variables are injected by Docker
+Compose; when running on the host, they are read from `.env.<APP_ENV>`.
+pydantic-settings precedence: environment variables > .env file > default values.
 """
 
 from __future__ import annotations
@@ -25,20 +25,20 @@ class Settings(BaseSettings):
     app_env: str = APP_ENV
     log_level: str = "INFO"
 
-    # Base de données (host `db` en conteneur, `localhost` en exécution hôte)
+    # Database (host `db` in container, `localhost` when running on host)
     database_url: str = "postgresql+asyncpg://rag:rag@db:5432/financialrag"
 
-    # Embeddings — Ollama, en natif sur l'hôte
+    # Embeddings — Ollama, native on the host
     ollama_base_url: str = "http://host.docker.internal:11434"
     embedding_model: str = "bge-m3"
 
-    # Génération — fournisseur actif : "mistral" ou "ollama"
+    # Generation — active provider: "mistral" or "ollama"
     llm_provider: str = "mistral"
     mistral_api_key: str = ""
     mistral_model: str = "mistral-small-latest"
 
-    # Dossier de dépôt des PDF uploadés via /ingest (relatif au WORKDIR du process ;
-    # monté sur `./data/raw` de l'hôte en local/debug — cf. docker-compose.override.yml)
+    # Directory for PDFs uploaded via /ingest (relative to the process's WORKDIR;
+    # mounted on the host's `./data/raw` in local/debug — see docker-compose.override.yml)
     upload_dir: str = "data/raw"
 
     @property
