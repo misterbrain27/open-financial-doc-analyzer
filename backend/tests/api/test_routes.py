@@ -1,11 +1,11 @@
-"""Tests des routes API (Phase 6) : `/ingest` et `/query`.
+"""Tests for the API routes (Phase 6): `/ingest` and `/query`.
 
-`db_session` (fixture transactionnelle, cf. `tests/conftest.py`) est injectée à la place de
-`get_session` via `app.dependency_overrides`. On utilise `httpx.AsyncClient` + `ASGITransport`
-plutôt que `fastapi.testclient.TestClient` : ces tests sont des coroutines qui tournent dans la
-même boucle asyncio que `db_session`/le moteur SQLAlchemy — un `TestClient` synchrone exécute
-l'app dans une boucle séparée (portal anyio) et casserait asyncpg (cf. le commentaire sur
-`asyncio_default_fixture_loop_scope` dans `pyproject.toml`).
+`db_session` (transactional fixture, cf. `tests/conftest.py`) is injected in place of
+`get_session` via `app.dependency_overrides`. We use `httpx.AsyncClient` + `ASGITransport`
+rather than `fastapi.testclient.TestClient`: these tests are coroutines that run in the same
+asyncio loop as `db_session`/the SQLAlchemy engine — a synchronous `TestClient` runs the app
+in a separate loop (anyio portal) and would break asyncpg (cf. the comment on
+`asyncio_default_fixture_loop_scope` in `pyproject.toml`).
 """
 
 from __future__ import annotations
@@ -42,7 +42,7 @@ async def api_client(db_session: AsyncSession) -> AsyncIterator[AsyncClient]:
 
 
 def make_pdf(path: Path, *, text: str = "Chiffre d'affaires 42M€") -> Path:
-    """Génère un PDF minimal à la volée (même trick que `tests/ingestion/test_loader.py`)."""
+    """Generates a minimal PDF on the fly (same trick as `tests/ingestion/test_loader.py`)."""
     c = canvas.Canvas(str(path))
     c.drawString(72, 800, text)
     c.showPage()
@@ -118,7 +118,7 @@ class FakeLLMClient(LLMClient):
 class FailingLLMClient(LLMClient):
     async def stream_chat(self, messages: list[dict[str, str]]) -> AsyncIterator[str]:
         raise RuntimeError("quota Mistral dépassé")
-        yield  # pragma: no cover — nécessaire pour que la méthode reste un générateur async
+        yield  # pragma: no cover — needed so the method stays an async generator
 
 
 async def test_query_streams_sources_then_deltas(

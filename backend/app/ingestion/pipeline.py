@@ -1,7 +1,7 @@
-"""Orchestration bout-en-bout (Phase 3) : PDF → chunks → embeddings → BDD pgvector.
+"""End-to-end orchestration (Phase 3): PDF → chunks → embeddings → pgvector database.
 
-Enchaîne les trois étapes déjà écrites (`load_pdf`, `chunk_document`, `embed_texts`) et
-persiste le résultat via SQLAlchemy (`Document` + `Chunk`, cf. `app/models.py`).
+Chains the three steps already written (`load_pdf`, `chunk_document`, `embed_texts`) and
+persists the result via SQLAlchemy (`Document` + `Chunk`, see `app/models.py`).
 """
 
 from __future__ import annotations
@@ -19,14 +19,14 @@ from app.models import Chunk, Document
 async def ingest_pdf(
     path: str | Path, session: AsyncSession, *, chunk_size: int = 1000, overlap: int = 150
 ) -> Document:
-    """Charge, découpe, embarque et persiste un PDF. Renvoie le `Document` créé."""
+    """Loads, chunks, embeds, and persists a PDF. Returns the created `Document`."""
     doc = load_pdf(path)
     chunks = chunk_document(doc, chunk_size=chunk_size, overlap=overlap)
     embeddings = await embed_texts([chunk.text for chunk in chunks])
 
     document = Document(source_path=doc.source_path, company=doc.company, year=doc.year)
     session.add(document)
-    await session.flush()  # attribue document.id (auto-incrément) sans committer
+    await session.flush()  # assigns document.id (auto-increment) without committing
 
     for chunk, embedding in zip(chunks, embeddings, strict=True):
         session.add(

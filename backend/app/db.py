@@ -1,7 +1,7 @@
-"""Couche base de données : moteur async, fabrique de sessions, base déclarative.
+"""Database layer: async engine, session factory, declarative base.
 
-`init_db()` active l'extension pgvector et crée les tables (pas de migrations Alembic à ce
-stade du projet — voir `models.py` pour le schéma).
+`init_db()` enables the pgvector extension and creates the tables (no Alembic migrations at
+this stage of the project — see `models.py` for the schema).
 """
 
 from __future__ import annotations
@@ -23,7 +23,7 @@ class Base(DeclarativeBase):
 
 
 async def init_db() -> None:
-    """Active pgvector et crée les tables déclarées sur `Base` si elles n'existent pas."""
+    """Enables pgvector and creates the tables declared on `Base` if they don't exist."""
     async with engine.begin() as conn:
         await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
         await conn.run_sync(Base.metadata.create_all)

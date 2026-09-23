@@ -1,13 +1,13 @@
-"""Routes API RAG (Phase 6) : `/ingest` (upload PDF) et `/query` (streaming SSE).
+"""RAG API routes (Phase 6): `/ingest` (PDF upload) and `/query` (SSE streaming).
 
-`/ingest` persiste le PDF uploadé sous `settings.upload_dir` (nom de fichier conservé —
-`load_pdf` en déduit `company`/`year`, cf. `ingestion/loader.py`) puis délègue à
+`/ingest` persists the uploaded PDF under `settings.upload_dir` (filename kept as-is —
+`load_pdf` derives `company`/`year` from it, see `ingestion/loader.py`) then delegates to
 `ingestion/pipeline.ingest_pdf` (Phase 3).
 
-`/query` streame la réponse du LLM en Server-Sent Events : un event `sources` (JSON, déjà
-connu avant la génération car issu de la recherche — Phase 4), puis un event `delta` par
-fragment de texte généré, puis `done` — ou `error` si le LLM échoue en cours de streaming
-(ex. quota Mistral dépassé), pour ne pas laisser la réponse HTTP se couper sans explication.
+`/query` streams the LLM's response as Server-Sent Events: a `sources` event (JSON, already
+known before generation since it comes from retrieval — Phase 4), then a `delta` event per
+generated text fragment, then `done` — or `error` if the LLM fails mid-stream
+(e.g. Mistral quota exceeded), so the HTTP response doesn't cut off without explanation.
 """
 
 from __future__ import annotations
@@ -31,7 +31,7 @@ router = APIRouter()
 
 
 class DocumentResponse(BaseModel):
-    """Réponse de `/ingest` : document créé (Phase 3)."""
+    """Response of `/ingest`: created document (Phase 3)."""
 
     id: int
     source_path: str
@@ -47,7 +47,7 @@ class DocumentResponse(BaseModel):
 async def ingest(
     file: UploadFile, session: AsyncSession = Depends(get_session)
 ) -> DocumentResponse:
-    """Sauvegarde le PDF uploadé puis l'ingère (chunking + embeddings + pgvector)."""
+    """Saves the uploaded PDF then ingests it (chunking + embeddings + pgvector)."""
     if file.filename is None or not file.filename.lower().endswith(".pdf"):
         raise HTTPException(400, "Seuls les fichiers .pdf sont acceptés")
 
@@ -59,8 +59,8 @@ async def ingest(
     try:
         document = await ingest_pdf(destination, session)
     except Exception as exc:
-        # Large volontairement (parsing PDF, chunking, appel embeddings...) : à ce stade on ne
-        # distingue pas la cause, on renvoie un 400 plutôt qu'un 500 brut côté client.
+        # Deliberately broad (PDF parsing, chunking, embeddings call...): at this stage we don't
+        # distinguish the cause, we return a 400 rather than a raw 500 to the client.
         raise HTTPException(400, f"Échec de l'ingestion : {exc}") from exc
 
     return DocumentResponse(
@@ -72,7 +72,7 @@ async def ingest(
 
 
 class QueryRequest(BaseModel):
-    """Corps de `/query`."""
+    """Body of `/query`."""
 
     query: str
     k: int = 5
@@ -81,7 +81,7 @@ class QueryRequest(BaseModel):
 
 
 def _sse_event(event: str, data: dict[str, object]) -> str:
-    """Formatte un event SSE : `event: <type>\\ndata: <json>\\n\\n`."""
+    """Formats an SSE event: `event: <type>\\ndata: <json>\\n\\n`."""
     return f"event: {event}\ndata: {json.dumps(data)}\n\n"
 
 
@@ -99,8 +99,8 @@ async def _stream_answer(request: QueryRequest, session: AsyncSession) -> AsyncI
             yield _sse_event("delta", {"text": delta})
         yield _sse_event("done", {})
     except Exception as exc:
-        # Ex. quota/réseau Mistral en cours de streaming : la réponse HTTP a déjà commencé
-        # (status 200 envoyé), on ne peut plus renvoyer un code d'erreur — on notifie via SSE.
+        # E.g. Mistral quota/network issue mid-streaming: the HTTP response has already started
+        # (status 200 sent), we can no longer return an error code — we notify via SSE.
         yield _sse_event("error", {"message": str(exc)})
 
 

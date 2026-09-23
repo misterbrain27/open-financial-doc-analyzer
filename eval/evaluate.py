@@ -1,20 +1,23 @@
-"""Évaluation du retrieval RAG : recall@k et MRR sur `eval/questions.jsonl`.
+"""RAG retrieval evaluation: recall@k and MRR on `eval/questions.jsonl`.
 
-Rejoue chaque question du jeu d'évaluation dans la recherche HYBRIDE (`retrieval.hybrid_search`,
-fusion RRF dense + lexical, Phase 9) et mesure la qualité du *retrieval* AVANT la génération :
+Replays each question from the evaluation set against HYBRID search (`retrieval.hybrid_search`,
+dense + lexical RRF fusion, Phase 9) and measures *retrieval* quality BEFORE generation:
 
-- recall@k : la bonne page est-elle quelque part dans le top-k ? (binaire par question)
-- MRR      : à quel rang sort la première bonne page ? (1/rang, moyenné)
+- recall@k: is the right page somewhere in the top-k? (binary per question)
+- MRR     : at what rank does the first right page come out? (1/rank, averaged)
 
-La vérité-terrain est au niveau **page** : un résultat est pertinent si son `page_number`
-figure dans les `expected_pages` de la question. On n'applique volontairement **aucun filtre**
-company/year ici, afin de mesurer le retrieval brut (cf. décision Phase 8).
+Ground truth is at the **page** level: a result is relevant if its `page_number` appears in the
+question's `expected_pages`. No company/year filter is applied on purpose, to measure raw
+retrieval (see the Phase 8 decision).
 
-Baseline **vectoriel pur** (Phase 8, avant l'hybride) : recall@5=0.933, MRR=0.889 — conservée dans
-`doc/phase-8-eval.md` et l'historique git de ce fichier, pour comparer avant/après (Phase 9).
+**Vector-only baseline** (Phase 8, before the hybrid): recall@5=0.933, MRR=0.889 — kept in
+`doc/phase-8-eval.md` and this file's git history, to compare before/after (Phase 9).
 
-Sortie : un rapport console (une ligne par question + résumé) et un `eval/report.json`
-reproductible (métriques globales + détail par question) pour versionner/comparer les runs.
+Output: a console report (one line per question + summary) and a reproducible `eval/report.json`
+(overall metrics + per-question detail) to version/compare runs.
+
+Note: the console report and `report.json` verdict text are intentionally kept in FRENCH — this
+is the actual artifact/report content (matching the app's French-facing product), not a comment.
 """
 
 from __future__ import annotations
@@ -32,18 +35,19 @@ REPORT_PATH = Path(__file__).parent / "report.json"
 
 
 def load_questions() -> list[dict]:
-    """Charge le jeu d'évaluation JSONL (un objet JSON complet par ligne)."""
+    """Loads the JSONL evaluation set (one complete JSON object per line)."""
     questions: list[dict] = []
     with QUESTIONS_PATH.open(encoding="utf-8") as f:
         for line in f:
             line = line.strip()
-            if line:  # tolère d'éventuelles lignes vides
+            if line:  # tolerate any blank lines
                 questions.append(json.loads(line))
     return questions
 
 
 def build_verdict(recall: float, mrr: float, num_miss: int, num_weak: int) -> str:
-    """Conclusion qualitative lisible, dérivée des métriques (seuils adaptés au corpus de démo)."""
+    """Readable qualitative conclusion derived from the metrics (thresholds tuned for the demo
+    corpus). Returned text is in French — it's the actual report content, not a comment."""
     if recall >= 0.95 and mrr >= 0.90:
         quality = "excellent"
     elif recall >= 0.80 and mrr >= 0.70:
@@ -73,14 +77,16 @@ async def evaluate() -> None:
 
     async with async_session() as session:
         for q in questions:
-            results = await hybrid_search(q["question"], session, k=K)  # pas de filtre : brut
-            retrieved_pages = [r.chunk.page_number for r in results]  # ordonné par rang (1 = top)
+            results = await hybrid_search(q["question"], session, k=K)  # no filter: raw
+            retrieved_pages = [
+                r.chunk.page_number for r in results
+            ]  # ordered by rank (1 = top)
             expected = set(q["expected_pages"])
 
-            # recall@k : au moins une page attendue présente dans les k premiers résultats.
+            # recall@k: at least one expected page present in the top-k results.
             recall = 1.0 if expected.intersection(retrieved_pages) else 0.0
 
-            # reciprocal rank : 1/rang de la PREMIÈRE page pertinente (rang 1-indexé), 0 si absente.
+            # reciprocal rank: 1/rank of the FIRST relevant page (1-indexed rank), 0 if absent.
             reciprocal_rank = 0.0
             for rank, page in enumerate(retrieved_pages, start=1):
                 if page in expected:
