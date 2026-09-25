@@ -66,6 +66,36 @@ PostgreSQL + pgvector                                  ▼
 | 8 — Tests & évaluation | E2E Playwright ; éval retrieval maison (recall@k, MRR) | `frontend/e2e/`, `eval/evaluate.py` |
 | 9 — Recherche hybride | Recherche vectorielle + lexicale fusionnées par Reciprocal Rank Fusion | `app/retrieval/search.py` (`hybrid_search`) |
 
+## Vidéos de démonstration
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Démonstration-3%20courtes%20vues-6A1B9A?style=for-the-badge&logo=githubactions&logoColor=white" alt="Démonstration" />
+</p>
+
+<p><strong>▶ Démo 01 — Pipeline d’ingestion</strong></p>
+
+Cette courte vidéo montre comment les PDF financiers bruts sont extraits, nettoyés et transformés en chunks structurés prêts à être indexés.
+
+<p align="center">
+  <img src="./assets/ingestionH264.gif" alt="Pipeline d’ingestion" width="1000" />
+</p>
+
+<p><strong>▶ Démo 02 — Recherche</strong></p>
+
+Cette démonstration met en avant la couche de recherche : matching sémantique et recherche hybride sur le corpus indexé.
+
+<p align="center">
+  <img src="./assets/retriavalH264.gif" alt="Démonstration de recherche" width="1000" />
+</p>
+
+<p><strong>▶ Démo 03 — Vérification & évaluation</strong></p>
+
+Cette vidéo illustre le flux de validation et les métriques de recherche utilisées pour vérifier que le système répond avec des sources pertinentes et ancrées.
+
+<p align="center">
+  <img src="./assets/verificationH264.gif" alt="Vérification et évaluation" width="1000" />
+</p>
+
 ## Évaluation du retrieval — mesurer avant d'optimiser
 
 `make eval` rejoue 15 questions à vérité-terrain connue sur la couche de retrieval et calcule
