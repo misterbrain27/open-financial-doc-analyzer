@@ -39,3 +39,6 @@ frontend/playwright.practice.config.ts
 frontend/playwright-report/
 frontend/test-results/
 frontend/.playwright/
+
+# Docs locales (choix existant)
+/doc/*
